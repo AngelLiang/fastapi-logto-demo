@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAPI Logto 演示</title>
+</head>
+<body>
+    <div class="container">
+        <h1>FastAPI Logto 身份认证演示</h1>
+        
+        {% if authenticated %}
+            <p>欢迎回来，{{ user.name if user.name else user.sub }}!</p>
+            
+            <div class="user-info">
+                <h3>用户信息：</h3>
+                <p><strong>用户ID:</strong> {{ user.sub }}</p>
+                {% if user.name %}<p><strong>姓名:</strong> {{ user.name }}</p>{% endif %}
+                {% if user.email %}<p><strong>邮箱:</strong> {{ user.email }}</p>{% endif %}
+            </div>
+            
+            <a href="/logout" class="button logout">退出登录</a>
+        {% else %}
+            <p>您尚未登录，请点击下方按钮登录系统</p>
+            <a href="/login" class="button">登录</a>
+        {% endif %}
+    </div>
+</body>
+</html>

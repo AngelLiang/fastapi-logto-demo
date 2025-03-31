@@ -1,18 +1,28 @@
 import os
 from fastapi import FastAPI, Request, Depends, HTTPException, status
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse, JSONResponse, HTMLResponse
 from logto import LogtoClient, LogtoConfig, LogtoException, Storage
 from starlette.middleware.sessions import SessionMiddleware
 import httpx
 import uvicorn
 from typing import Optional, Union
 from dotenv import load_dotenv
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 
 load_dotenv()
 
 # 创建 FastAPI 应用
 app = FastAPI(title="FastAPI Logto Demo")
+
+# 创建模板和静态文件目录
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
+
+# 静态文件挂载
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
 # 添加 session 中间件，用于存储认证状态
 app.add_middleware(
@@ -75,24 +85,20 @@ async def get_current_user(request: Request):
 async def homepage(request: Request):
     """首页路由"""
     user = await get_current_user(request)
-    if user:
-        return {
-            "message": "已登录",
-            "user": user,
-            "authenticated": True
+    # 渲染页面并返回
+    return templates.TemplateResponse(
+        "index.html",
+        {
+            "request": request,
+            "authenticated": user is not None,
+            "user": user
         }
-    else:
-        return {
-            "message": "未登录",
-            "authenticated": False,
-            "login_url": "/login"
-        }
-
-# 登录路由
+    )
 
 
 @app.get("/login")
 async def login(request: Request):
+    """登录路由"""
     # 生成登录 URL 并重定向
     # 创建 Logto 客户端
     logto_client = LogtoClient(
@@ -101,6 +107,7 @@ async def login(request: Request):
     )
     sign_in_url = await logto_client.signIn(
         redirectUri=LOGTO_LOGIN_REDIRECT_URI,
+        interactionMode="signUp",
     )
     # print(sign_in_url)
     return RedirectResponse(sign_in_url)
@@ -122,7 +129,8 @@ async def logout(request: Request):
 
     # 直接返回
     await logto_client.signOut()
-    return {'code': 200, 'message': '成功登出'}
+    # return {'code': 200, 'message': '成功登出'}
+    return RedirectResponse('/')
 
 
 @app.get("/callback")
