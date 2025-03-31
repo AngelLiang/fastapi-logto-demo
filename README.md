@@ -21,9 +21,9 @@ uv sync
 
 到logto的应用配置页面获取endpoint，appid和appsecret，配置的环境变量
 
-···
+```
 cp .env.example .env
-···
+```
 
 ```
 LOGTO_ENDPOINT=
