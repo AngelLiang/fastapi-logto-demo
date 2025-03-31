@@ -29,6 +29,9 @@ logto_config = LogtoConfig(
     # resources=['你的API资源ID']  # 可选，如果有受保护的API资源
 )
 
+LOGTO_LOGIN_REDIRECT_URI = os.getenv(
+    'LOGTO_LOGIN_REDIRECT_URI', 'http://127.0.0.1:8000/callback')
+
 
 class SessionStorage(Storage):
 
@@ -36,11 +39,9 @@ class SessionStorage(Storage):
         self.session = session
 
     def get(self, key: str) -> Union[str, None]:
-        print('get', key)
         return self.session.get(key, None)
 
     def set(self, key: str, value: Union[str, None]) -> None:
-        print('set', key, value)
         self.session[key] = value
 
     def delete(self, key: str) -> None:
@@ -99,7 +100,7 @@ async def login(request: Request):
         storage=SessionStorage(request.session)
     )
     sign_in_url = await logto_client.signIn(
-        redirectUri="http://127.0.0.1:8000/callback",
+        redirectUri=LOGTO_LOGIN_REDIRECT_URI,
     )
     # print(sign_in_url)
     return RedirectResponse(sign_in_url)
@@ -119,6 +120,7 @@ async def logout(request: Request):
     # sign_out_url = await logto_client.signOut("http://127.0.0.1:8000")
     # return RedirectResponse(sign_out_url)
 
+    # 直接返回
     await logto_client.signOut()
     return {'code': 200, 'message': '成功登出'}
 
@@ -128,9 +130,6 @@ async def callback(request: Request):
     """授权回调路由"""
     # print(request.url)
     try:
-        # 使用授权码获取令牌
-        # tokens = await logto_client.get_oidc_tokens_by_authorization_code(code)
-
         # 创建 Logto 客户端
         logto_client = LogtoClient(
             logto_config,
@@ -160,16 +159,16 @@ async def protected_resource(request: Request):
             headers={"WWW-Authenticate": "Bearer"}
         )
     return {
+        'code': 200,
         "message": "这是受保护的资源",
-        "user_id": user.get("sub"),
-        "username": user.get("name", "未知用户名")
+        "user_id": user.sub,
+        "username": user.name
     }
-
-# 用户信息路由
 
 
 @app.get("/user-info")
 async def user_info(request: Request):
+    """用户信息路由"""
     user = await get_current_user(request)
     if not user:
         raise HTTPException(
