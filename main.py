@@ -85,12 +85,18 @@ async def get_current_user(request: Request):
 async def homepage(request: Request):
     """首页路由"""
     user = await get_current_user(request)
+    # 创建 Logto 客户端
+    logto_client = LogtoClient(
+        logto_config,
+        storage=SessionStorage(request.session)
+    )
+
     # 渲染页面并返回
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
-            "authenticated": user is not None,
+            "authenticated": logto_client.isAuthenticated(),
             "user": user
         }
     )
