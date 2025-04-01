@@ -50,3 +50,7 @@ uv run python main.py
 访问 http://127.0.0.1:8000/protected 可以查看受保护的资源，未登录不能查看
 
 访问 http://127.0.0.1:8000/logout 登出
+
+## 其他
+
+logto_m2m_client.py 是对接 logto 的管理接口模块

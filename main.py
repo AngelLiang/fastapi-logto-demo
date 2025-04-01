@@ -113,7 +113,7 @@ async def login(request: Request):
     )
     sign_in_url = await logto_client.signIn(
         redirectUri=LOGTO_LOGIN_REDIRECT_URI,
-        interactionMode="signUp",
+        # interactionMode="signUp",
     )
     # print(sign_in_url)
     return RedirectResponse(sign_in_url)
@@ -190,6 +190,38 @@ async def user_info(request: Request):
             detail="需要认证"
         )
     return user
+
+
+@app.post("/send-code", tags=['API'], summary='发送验证码')
+async def send_code(request: Request, phone: str):
+    """发送验证码"""
+    from logto_m2m_client import LogtoM2MClient
+
+    client = LogtoM2MClient()
+    result = await client.fetch_access_token()
+    access_token = result['access_token']
+    result = await client.send_phone_code(access_token, phone)
+
+    return {
+        'code': result,
+        "message": "success",
+    }
+
+
+@app.post("/verfiy-code", tags=['API'], summary='校验验证码')
+async def verfiy_code(request: Request, phone: str, code: str):
+    """校验验证码"""
+    from logto_m2m_client import LogtoM2MClient
+
+    client = LogtoM2MClient()
+    result = await client.fetch_access_token()
+    access_token = result['access_token']
+    result = await client.verfiy_phone_code(access_token, phone, code)
+
+    return {
+        'code': result,
+        "message": "success",
+    }
 
 if __name__ == "__main__":
     uvicorn.run('main:app', host="0.0.0.0", port=8000, reload=True)
